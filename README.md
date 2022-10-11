@@ -1,6 +1,7 @@
 # install package
 ```
 pip install pyside6
+
 ```
 # git
 ## initialize
