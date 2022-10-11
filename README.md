@@ -1,7 +1,7 @@
 # install package
 ```
 pip install pyside6
-
+pip install pikepdf
 ```
 # git
 ## initialize
