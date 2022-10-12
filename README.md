@@ -2,6 +2,7 @@
 ```
 pip install pyside6
 pip install pikepdf
+pip install json2html
 ```
 # git
 ## initialize
