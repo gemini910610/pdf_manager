@@ -4,6 +4,9 @@ from PySide6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushBu
 from PySide6.QtCore import Qt
 import os
 
+class Global:
+    path = ''
+
 '''
 TODO
 check path is not empty before do anything
@@ -33,15 +36,13 @@ class MainTopBar(HBoxLayout):
         change_directory_button.setFixedSize(self.button_width, self.button_height)
         change_directory_button.clicked.connect(self.change_directory)
 
-        global path
-        self.directory_label = directory_label = QLabel(path)
+        self.directory_label = directory_label = QLabel(Global.path)
         self.addWidget(directory_label)
         directory_label.setFixedHeight(self.button_height)
     
     def change_directory(self):
-        global path
-        path = QFileDialog.getExistingDirectory()
-        self.directory_label.setText(path)
+        Global.path = QFileDialog.getExistingDirectory()
+        self.directory_label.setText(Global.path)
         '''
         TODO
         clear directories_view_scroll_area
@@ -97,8 +98,7 @@ class DirectoriesView(QWidget):
         self.scroll_area = scroll_area = ScrollArea()
         layout.addWidget(scroll_area)
 
-        global path
-        self.change_directory(path)
+        self.change_directory(Global.path)
     
     def change_directory(self, path):
         self.scroll_area.clear_list()
@@ -183,8 +183,6 @@ class MainWindow(QMainWindow):
         set window title
         '''
 
-        global path
-
         widget = QWidget()
         layout = VBoxLayout()
         widget.setLayout(layout)
@@ -198,7 +196,7 @@ app = QApplication([])
 TODO
 select directory and write into config file
 '''
-path = QFileDialog.getExistingDirectory()
+Global.path = QFileDialog.getExistingDirectory()
 window = MainWindow()
 window.show()
 app.exec()
