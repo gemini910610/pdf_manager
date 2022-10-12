@@ -1,6 +1,4 @@
-from PySide6.QtWidgets import QApplication, QMainWindow
-from PySide6.QtWidgets import QFileDialog
-from PySide6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea
 from PySide6.QtCore import Qt, QUrl
 import os
 
@@ -127,6 +125,10 @@ class FileItem(QLabel):
 
     def __init__(self, filename: str):
         url = f'file:///{Global.path}/{Global.directory}/{filename}'
+        '''
+        TODO
+        check following code
+        '''
         url = bytearray(QUrl.fromLocalFile(url).toEncoded()).decode()
         super().__init__(f'<a href="{url}">{filename}</a>')
         self.setOpenExternalLinks(True)
