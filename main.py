@@ -50,7 +50,8 @@ class MainTopBar(HBoxLayout):
         Global.files_scroll_area.clear_list()
         directories = os.listdir(Global.path)
         for directory in directories:
-            Global.directories_scroll_area.add_widget(DirectoryItem(directory))
+            if os.path.isdir(f'{Global.path}/{directory}'):
+                Global.directories_scroll_area.add_widget(DirectoryItem(directory))
         Global.directories_scroll_area.end_list()
         Global.directories_scroll_area.scroll_to_top()
 
@@ -95,7 +96,8 @@ class DirectoryItem(QPushButton):
         Global.files_scroll_area.clear_list()
         files = os.listdir(Global.path + '/' + self.text())
         for file in files:
-            Global.files_scroll_area.add_widget(FileItem(file))
+            if file.endswith('.pdf') or file.endswith('.json'):
+                Global.files_scroll_area.add_widget(FileItem(file))
         Global.files_scroll_area.end_list()
         Global.files_scroll_area.scroll_to_top()
 
@@ -115,7 +117,8 @@ class DirectoriesView(QWidget):
         scroll_area.clear_list()
         directories = os.listdir(path)
         for directory in directories:
-            scroll_area.add_widget(DirectoryItem(directory))
+            if os.path.isdir(f'{path}/{directory}'):
+                scroll_area.add_widget(DirectoryItem(directory))
         scroll_area.end_list()
         scroll_area.scroll_to_top()
 
