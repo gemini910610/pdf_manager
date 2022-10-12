@@ -1,12 +1,31 @@
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt
 import os
+import json
+
+class Config:
+    def __init__(self):
+        if not os.path.exists('config.json'):
+            self.default_path = None
+            self.output_path = None
+            self.save()
+        else:
+            self.load()
+    
+    def save(self):
+        with open('config.json', 'w') as config_file:
+            json.dump(self.__dict__, config_file)
+    def load(self):
+        with open('config.json', 'r') as config_file:
+            config = json.load(config_file)
+            self.default_path = config['default_path']
+            self.output_path = config['output_path']
 
 class Global:
-    path = ''
     directory = ''
     directories_scroll_area = None
     files_scroll_area = None
+    config = Config()
 
 '''
 TODO
@@ -37,21 +56,33 @@ class MainTopBar(HBoxLayout):
         change_path_button.setFixedSize(self.button_width, self.button_height)
         change_path_button.clicked.connect(self.change_path)
 
-        self.path_label = path_label = QLabel(Global.path)
+        self.path_label = path_label = QLabel(Global.config.default_path)
         self.addWidget(path_label)
         path_label.setFixedHeight(self.button_height)
+
+        convert_button = QPushButton('merge\nconvert')
+        self.addWidget(convert_button)
+        convert_button.setFixedSize(self.button_width, self.button_height)
+        convert_button.clicked.connect(self.merge_and_convert)
     
     def change_path(self):
-        Global.path = QFileDialog.getExistingDirectory()
-        self.path_label.setText(Global.path)
+        Global.config.default_path = QFileDialog.getExistingDirectory()
+        Global.config.save()
+        self.path_label.setText(Global.config.default_path)
         Global.directories_scroll_area.clear_list()
         Global.files_scroll_area.clear_list()
-        directories = os.listdir(Global.path)
+        directories = os.listdir(Global.config.default_path)
         for directory in directories:
-            if os.path.isdir(f'{Global.path}/{directory}'):
+            if os.path.isdir(f'{Global.config.default_path}/{directory}'):
                 Global.directories_scroll_area.add_widget(DirectoryItem(directory))
         Global.directories_scroll_area.end_list()
         Global.directories_scroll_area.scroll_to_top()
+    
+    def merge_and_convert(self):
+        '''
+        TODO
+        complete this function
+        '''
 
 class ScrollArea(QScrollArea):
     def __init__(self):
@@ -92,7 +123,7 @@ class DirectoryItem(QPushButton):
     def on_click(self):
         Global.directory = self.text()
         Global.files_scroll_area.clear_list()
-        files = os.listdir(Global.path + '/' + self.text())
+        files = os.listdir(Global.config.default_path + '/' + self.text())
         for file in files:
             if file.endswith('.pdf') or file.endswith('.json'):
                 Global.files_scroll_area.add_widget(FileItem(file))
@@ -108,9 +139,9 @@ class DirectoriesView(QWidget):
         Global.directories_scroll_area = ScrollArea()
         layout.addWidget(Global.directories_scroll_area)
 
-        self.change_directory(Global.path)
+        self.change_path(Global.config.default_path)
     
-    def change_directory(self, path):
+    def change_path(self, path):
         scroll_area = Global.directories_scroll_area
         scroll_area.clear_list()
         directories = os.listdir(path)
@@ -124,13 +155,7 @@ class FileItem(QLabel):
     item_height = 50
 
     def __init__(self, filename: str):
-        url = f'file:///{Global.path}/{Global.directory}/{filename}'
-        '''
-        TODO
-        check following code
-        '''
-        url = bytearray(QUrl.fromLocalFile(url).toEncoded()).decode()
-        super().__init__(f'<a href="{url}">{filename}</a>')
+        super().__init__(f'<a href="file:///{Global.config.default_path}/{Global.directory}/{filename}">{filename}</a>')
         self.setOpenExternalLinks(True)
         self.setFixedHeight(self.item_height)
 
@@ -139,6 +164,11 @@ class FilesView(QWidget):
         super().__init__()
         layout = VBoxLayout()
         self.setLayout(layout)
+
+        '''
+        TODO
+        add title bar to show current directory
+        '''
 
         Global.files_scroll_area = ScrollArea()
         layout.addWidget(Global.files_scroll_area)
@@ -171,11 +201,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(MainContent())
 
 app = QApplication([])
-'''
-TODO
-select directory and write into config file
-'''
-Global.path = QFileDialog.getExistingDirectory()
+if Global.config.default_path is None:
+    Global.config.default_path = QFileDialog.getExistingDirectory()
+    Global.config.save()
 window = MainWindow()
 window.showMaximized()
 app.exec()
