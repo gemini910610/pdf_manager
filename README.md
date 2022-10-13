@@ -3,6 +3,7 @@
 pip install pyside6
 pip install pikepdf
 pip install fpdf2
+pip install pyinstaller
 ```
 # git
 ## initialize
@@ -22,3 +23,13 @@ git push pdf master
 ```
 # .gitignore
 * 不要被上傳的檔案
+# pyinstaller
+```
+@pyinstaller main.py -w -F -p ./.venv/Lib/site-packages --copy-metadata pikepdf
+@rmdir build /s /q
+@del main.spec
+@copy MicrosoftYaHeiMono-CP950.ttf dist\MicrosoftYaHeiMono-CP950.ttf
+```
+| `-w` hide console when run exe
+| `-F` only output one file
+| `-p` python site-packages path
