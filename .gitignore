@@ -4,3 +4,5 @@ __pycache__/
 sample.*
 config.json
 .vscode/
+dist/
+python_exe.bat
