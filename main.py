@@ -118,38 +118,13 @@ class MainTopBar(HBoxLayout):
                 if file.endswith('json'):
                     Global.convert_done = False
                     print(f'[start convert] {file}', end='')
-                    '''
-                    TODO
-                    replace into json to html code
-                    '''
-                    # json to html
+                    # json to html code
                     filename = file.replace('.json', '')
-                    html_code = pdf_manager.json_to_html(f'{path}/{file}')
-                    with open(f'{path}/{filename}.html', 'w') as html_file:
-                        html_file.write(html_code)
+                    html_code = pdf_manager.json_to_html_code(f'{path}/{file}')
                     # html code to pdf
-                    html_code_example = '''
-                    <table>
-                        <thead>
-                            <tr>
-                                <th width="50%">Header 1</th>
-                                <th width="50%">Header 2</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>cell 1</td><td>cell 2</td></tr>
-                            <tr><td>cell 3</td><td>cell 4</td></tr>
-                        </tbody>
-                    </table>
-                    '''
-                    pdf_manager.html_code_to_pdf(html_code_example, f'{path}/{filename}.pdf')
+                    pdf_manager.html_code_to_pdf(html_code, f'{path}/{filename}.pdf')
                     print(f'\r\033[K[convert done] {file}')
                     pdf_files.append(f'{path}/{filename}.pdf')
-                    '''
-                    TODO
-                    add following code into pdf_manager
-                    '''
-                    os.remove(f'{path}/{filename}.html')
                 elif file.endswith('pdf'):
                     pdf_files.append(f'{path}/{file}')
             # merge pdf
