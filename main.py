@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt
 import os
 import json
 import pdf_manager
+import logging
 
 class Config:
     def __init__(self):
@@ -34,7 +35,7 @@ class Global:
 
 '''
 TODO
-check Global.config.default_path is not empty before do anything
+remove all print()
 '''
 
 class HBoxLayout(QHBoxLayout):
@@ -81,7 +82,10 @@ class MainTopBar(HBoxLayout):
         convert_button.clicked.connect(self.convert_and_merge)
     
     def change_path(self):
-        Global.config.default_path = QFileDialog.getExistingDirectory()
+        default_path = QFileDialog.getExistingDirectory()
+        if default_path == '':
+            return
+        Global.config.default_path = default_path
         Global.config.save()
         self.path_label.setText(Global.config.default_path)
         Global.directories_view.change_path()
@@ -108,13 +112,12 @@ class MainTopBar(HBoxLayout):
             path = f'{Global.config.default_path}/{directory}'
             files = os.listdir(f'{Global.config.default_path}/{directory}')
             if merge_output_filename in files:
-                print('pass')
                 continue
             pdf_files = []
             for file in files:
                 if file.endswith('json'):
                     Global.convert_done = False
-                    print(f'[start convert] {file}')
+                    print(f'[start convert] {file}', end='')
                     '''
                     TODO
                     replace into json to html code
@@ -140,7 +143,7 @@ class MainTopBar(HBoxLayout):
                     </table>
                     '''
                     pdf_manager.html_code_to_pdf(html_code_example, f'{path}/{filename}.pdf')
-                    print(f'[convert done] {file}')
+                    print(f'\r\033[K[convert done] {file}')
                     pdf_files.append(f'{path}/{filename}.pdf')
                     '''
                     TODO
@@ -151,9 +154,8 @@ class MainTopBar(HBoxLayout):
                     pdf_files.append(f'{path}/{file}')
             # merge pdf
             if pdf_files != []:
-                print(pdf_files)
                 pdf_manager.merge(pdf_files, f'{path}/{merge_output_filename}')
-                print(f'[merge complete] {directory}')
+                print(f'[merge success] {directory}')
     
     # def save_output_path(self, output_path):
     #     Global.config.output_path = output_path
@@ -214,6 +216,8 @@ class DirectoriesView(QWidget):
         self.change_path()
 
     def change_path(self):
+        if Global.config.default_path == '':
+            return
         self.scroll_area.clear_list()
         directories = os.listdir(Global.config.default_path)
         Global.directories = []
@@ -290,6 +294,10 @@ class MainWindow(QMainWindow):
         layout.addLayout(MainTopBar())
         layout.addWidget(MainContent())
 
+'''
+TODO
+add exception catcher and will log exception into error.log
+'''
 app = QApplication([])
 if Global.config.default_path == '':
     Global.config.default_path = QFileDialog.getExistingDirectory()
