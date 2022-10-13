@@ -33,11 +33,6 @@ class Global:
     directories_view = None
     files_view = None
 
-'''
-TODO
-remove all print()
-'''
-
 class HBoxLayout(QHBoxLayout):
     def __init__(self, spacing: int = 0):
         super().__init__()
@@ -117,20 +112,17 @@ class MainTopBar(HBoxLayout):
             for file in files:
                 if file.endswith('json'):
                     Global.convert_done = False
-                    print(f'[start convert] {file}', end='')
                     # json to html code
                     filename = file.replace('.json', '')
                     html_code = pdf_manager.json_to_html_code(f'{path}/{file}')
                     # html code to pdf
                     pdf_manager.html_code_to_pdf(html_code, f'{path}/{filename}.pdf')
-                    print(f'\r\033[K[convert done] {file}')
                     pdf_files.append(f'{path}/{filename}.pdf')
                 elif file.endswith('pdf'):
                     pdf_files.append(f'{path}/{file}')
             # merge pdf
             if pdf_files != []:
                 pdf_manager.merge(pdf_files, f'{path}/{merge_output_filename}')
-                print(f'[merge success] {directory}')
     
     # def save_output_path(self, output_path):
     #     Global.config.output_path = output_path
