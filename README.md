@@ -2,7 +2,6 @@
 ```
 pip install pyside6
 pip install pikepdf
-pip install json2html
 pip install fpdf2
 ```
 # git
