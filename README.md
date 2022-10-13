@@ -30,6 +30,6 @@ git push pdf master
 @del main.spec
 @copy MicrosoftYaHeiMono-CP950.ttf dist\MicrosoftYaHeiMono-CP950.ttf
 ```
-| `-w` hide console when run exe
-| `-F` only output one file
-| `-p` python site-packages path
+> **`-w`** hide console when run exe<br>
+> **`-F`** only output one file<br>
+> **`-p`** python site-packages path
