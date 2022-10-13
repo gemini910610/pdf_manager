@@ -46,6 +46,14 @@ def html_code_to_pdf(html_code: str, output_filename: str):
     pdf.add_page()
     pdf.write_html(html_code)
     pdf.output(output_filename)
+
+'''
+convert to pdf from file
+can use json2html to generate html code and write it into .html file
+remember to delete .html file after convert success
+'''
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtCore import QUrl
 def html_file_to_pdf(html_filename: str, output_filename: str):
     loader = QWebEngineView()
     loader.load(QUrl(html_filename))
@@ -58,22 +66,3 @@ def html_file_to_pdf(html_filename: str, output_filename: str):
         loader.show()
         loader.close()
     loader.loadFinished.connect(output_pdf)
-
-html_code = json_to_html('sample.json')
-
-'''
-convert to pdf from file
-can use json2html to generate html code and write it into .html file
-remember to delete .html file after convert success
-'''
-
-from PySide6.QtWidgets import QApplication
-from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtCore import QUrl
-
-with open('sample.html', 'w') as html:
-    html.write(html_code)
-
-app = QApplication([])
-html_file_to_pdf('D:/Python Code/pdf/sample.html', 'sample.pdf')
-app.exec()

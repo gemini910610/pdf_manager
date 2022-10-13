@@ -1,13 +1,15 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea, QMessageBox, QCheckBox
 from PySide6.QtCore import Qt
 import os
 import json
+import pdf_manager
 
 class Config:
     def __init__(self):
         if not os.path.exists('config.json'):
-            self.default_path = None
-            self.output_path = None
+            self.default_path = ''
+            self.output_path = ''
+            self.ask_save_output_path = True
             self.save()
         else:
             self.load()
@@ -20,16 +22,18 @@ class Config:
             config = json.load(config_file)
             self.default_path = config['default_path']
             self.output_path = config['output_path']
+            self.ask_save_output_path = config['ask_save_output_path']
 
 class Global:
     directory = ''
     directories_scroll_area = None
     files_scroll_area = None
     config = Config()
+    main_window = None
 
 '''
 TODO
-check path is not empty before do anything
+check Global.config.default_path is not empty before do anything
 '''
 
 class HBoxLayout(QHBoxLayout):
@@ -43,6 +47,16 @@ class VBoxLayout(QVBoxLayout):
         super().__init__()
         self.setContentsMargins(0, 0, 0, 0)
         self.setSpacing(spacing)
+
+class MessageBox(QMessageBox):
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
+        self.setText('Do you want to save as default output path?')
+        self.setInformativeText('You can edit default output path in config.json.')
+        self.yes_button = self.addButton(QMessageBox.Yes)
+        self.addButton(QMessageBox.No)
+        self.check_box = QCheckBox('Don\'t show this again.')
+        self.setCheckBox(self.check_box)
 
 class MainTopBar(HBoxLayout):
     button_width = 100
@@ -79,10 +93,22 @@ class MainTopBar(HBoxLayout):
         Global.directories_scroll_area.scroll_to_top()
     
     def merge_and_convert(self):
-        '''
-        TODO
-        complete this function
-        '''
+        if Global.config.output_path == '':
+            output_path = QFileDialog.getExistingDirectory()
+            if Global.config.ask_save_output_path:
+                message_box = MessageBox(Global.main_window)
+                message_box.check_box.stateChanged.connect(self.switch_check_box)
+                message_box.yes_button.clicked.connect(lambda: self.save_output_path(output_path))
+                message_box.show()
+    
+    def save_output_path(self, output_path):
+        Global.config.output_path = output_path
+        Global.config.save()
+    
+    def switch_check_box(self):
+        Global.config.ask_save_output_path = not Global.config.ask_save_output_path
+        print(Global.config.ask_save_output_path)
+        Global.config.save()
 
 class ScrollArea(QScrollArea):
     def __init__(self):
@@ -201,9 +227,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(MainContent())
 
 app = QApplication([])
-if Global.config.default_path is None:
+if Global.config.default_path == '':
     Global.config.default_path = QFileDialog.getExistingDirectory()
     Global.config.save()
-window = MainWindow()
+Global.main_window = window = MainWindow()
 window.showMaximized()
 app.exec()
