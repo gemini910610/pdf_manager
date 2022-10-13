@@ -8,8 +8,8 @@ class Config:
     def __init__(self):
         if not os.path.exists('config.json'):
             self.default_path = ''
-            self.output_path = ''
-            self.ask_save_output_path = True
+            # self.output_path = ''
+            # self.ask_save_output_path = True
             self.save()
         else:
             self.load()
@@ -21,15 +21,16 @@ class Config:
         with open('config.json', 'r') as config_file:
             config = json.load(config_file)
             self.default_path = config['default_path']
-            self.output_path = config['output_path']
-            self.ask_save_output_path = config['ask_save_output_path']
+            # self.output_path = config['output_path']
+            # self.ask_save_output_path = config['ask_save_output_path']
 
 class Global:
     directory = ''
-    directories_scroll_area = None
-    files_scroll_area = None
     config = Config()
     main_window = None
+    directories = []
+    directories_view = None
+    files_view = None
 
 '''
 TODO
@@ -48,15 +49,15 @@ class VBoxLayout(QVBoxLayout):
         self.setContentsMargins(0, 0, 0, 0)
         self.setSpacing(spacing)
 
-class MessageBox(QMessageBox):
-    def __init__(self, parent: QWidget):
-        super().__init__(parent)
-        self.setText('Do you want to save as default output path?')
-        self.setInformativeText('You can edit default output path in config.json.')
-        self.yes_button = self.addButton(QMessageBox.Yes)
-        self.addButton(QMessageBox.No)
-        self.check_box = QCheckBox('Don\'t show this again.')
-        self.setCheckBox(self.check_box)
+# class MessageBox(QMessageBox):
+#     def __init__(self, parent: QWidget):
+#         super().__init__(parent)
+#         self.setText('Do you want to save as default output path?')
+#         self.setInformativeText('You can edit default output path in config.json.')
+#         self.yes_button = self.addButton(QMessageBox.Yes)
+#         self.addButton(QMessageBox.No)
+#         self.check_box = QCheckBox('Don\'t show this again.')
+#         self.setCheckBox(self.check_box)
 
 class MainTopBar(HBoxLayout):
     button_width = 100
@@ -77,38 +78,90 @@ class MainTopBar(HBoxLayout):
         convert_button = QPushButton('merge\nconvert')
         self.addWidget(convert_button)
         convert_button.setFixedSize(self.button_width, self.button_height)
-        convert_button.clicked.connect(self.merge_and_convert)
+        convert_button.clicked.connect(self.convert_and_merge)
     
     def change_path(self):
         Global.config.default_path = QFileDialog.getExistingDirectory()
         Global.config.save()
         self.path_label.setText(Global.config.default_path)
-        Global.directories_scroll_area.clear_list()
-        Global.files_scroll_area.clear_list()
-        directories = os.listdir(Global.config.default_path)
-        for directory in directories:
-            if os.path.isdir(f'{Global.config.default_path}/{directory}'):
-                Global.directories_scroll_area.add_widget(DirectoryItem(directory))
-        Global.directories_scroll_area.end_list()
-        Global.directories_scroll_area.scroll_to_top()
+        Global.directories_view.change_path()
+        Global.files_view.clear()
     
-    def merge_and_convert(self):
-        if Global.config.output_path == '':
-            output_path = QFileDialog.getExistingDirectory()
-            if Global.config.ask_save_output_path:
-                message_box = MessageBox(Global.main_window)
-                message_box.check_box.stateChanged.connect(self.switch_check_box)
-                message_box.yes_button.clicked.connect(lambda: self.save_output_path(output_path))
-                message_box.show()
+    '''
+    TODO
+    add progress bar
+    '''
+    def convert_and_merge(self):
+        merge_output_filename = 'merge_result.pdf'
+
+        # if Global.config.output_path == '':
+        #     output_path = QFileDialog.getExistingDirectory()
+        #     if Global.config.ask_save_output_path:
+        #         message_box = MessageBox(Global.main_window)
+        #         message_box.check_box.stateChanged.connect(self.switch_check_box)
+        #         message_box.yes_button.clicked.connect(lambda: self.save_output_path(output_path))
+        #         message_box.show()
+        # else:
+        #     output_path = Global.config.output_path
+
+        for directory in Global.directories:
+            path = f'{Global.config.default_path}/{directory}'
+            files = os.listdir(f'{Global.config.default_path}/{directory}')
+            if merge_output_filename in files:
+                print('pass')
+                continue
+            pdf_files = []
+            for file in files:
+                if file.endswith('json'):
+                    Global.convert_done = False
+                    print(f'[start convert] {file}')
+                    '''
+                    TODO
+                    replace into json to html code
+                    '''
+                    # json to html
+                    filename = file.replace('.json', '')
+                    html_code = pdf_manager.json_to_html(f'{path}/{file}')
+                    with open(f'{path}/{filename}.html', 'w') as html_file:
+                        html_file.write(html_code)
+                    # html code to pdf
+                    html_code_example = '''
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="50%">Header 1</th>
+                                <th width="50%">Header 2</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>cell 1</td><td>cell 2</td></tr>
+                            <tr><td>cell 3</td><td>cell 4</td></tr>
+                        </tbody>
+                    </table>
+                    '''
+                    pdf_manager.html_code_to_pdf(html_code_example, f'{path}/{filename}.pdf')
+                    print(f'[convert done] {file}')
+                    pdf_files.append(f'{path}/{filename}.pdf')
+                    '''
+                    TODO
+                    add following code into pdf_manager
+                    '''
+                    os.remove(f'{path}/{filename}.html')
+                elif file.endswith('pdf'):
+                    pdf_files.append(f'{path}/{file}')
+            # merge pdf
+            if pdf_files != []:
+                print(pdf_files)
+                pdf_manager.merge(pdf_files, f'{path}/{merge_output_filename}')
+                print(f'[merge complete] {directory}')
     
-    def save_output_path(self, output_path):
-        Global.config.output_path = output_path
-        Global.config.save()
+    # def save_output_path(self, output_path):
+    #     Global.config.output_path = output_path
+    #     Global.config.save()
     
-    def switch_check_box(self):
-        Global.config.ask_save_output_path = not Global.config.ask_save_output_path
-        print(Global.config.ask_save_output_path)
-        Global.config.save()
+    # def switch_check_box(self):
+    #     Global.config.ask_save_output_path = not Global.config.ask_save_output_path
+    #     Global.config.save()
 
 class ScrollArea(QScrollArea):
     def __init__(self):
@@ -148,13 +201,7 @@ class DirectoryItem(QPushButton):
     
     def on_click(self):
         Global.directory = self.text()
-        Global.files_scroll_area.clear_list()
-        files = os.listdir(Global.config.default_path + '/' + self.text())
-        for file in files:
-            if file.endswith('.pdf') or file.endswith('.json'):
-                Global.files_scroll_area.add_widget(FileItem(file))
-        Global.files_scroll_area.end_list()
-        Global.files_scroll_area.scroll_to_top()
+        Global.files_view.open_directory()
 
 class DirectoriesView(QWidget):
     def __init__(self):
@@ -162,20 +209,20 @@ class DirectoriesView(QWidget):
         layout = VBoxLayout()
         self.setLayout(layout)
 
-        Global.directories_scroll_area = ScrollArea()
-        layout.addWidget(Global.directories_scroll_area)
+        self.scroll_area = ScrollArea()
+        layout.addWidget(self.scroll_area)
+        self.change_path()
 
-        self.change_path(Global.config.default_path)
-    
-    def change_path(self, path):
-        scroll_area = Global.directories_scroll_area
-        scroll_area.clear_list()
-        directories = os.listdir(path)
+    def change_path(self):
+        self.scroll_area.clear_list()
+        directories = os.listdir(Global.config.default_path)
+        Global.directories = []
         for directory in directories:
-            if os.path.isdir(f'{path}/{directory}'):
-                scroll_area.add_widget(DirectoryItem(directory))
-        scroll_area.end_list()
-        scroll_area.scroll_to_top()
+            if os.path.isdir(f'{Global.config.default_path}/{directory}'):
+                self.scroll_area.add_widget(DirectoryItem(directory))
+                Global.directories.append(f'{directory}')
+        self.scroll_area.end_list()
+        self.scroll_area.scroll_to_top()
 
 class FileItem(QLabel):
     item_height = 50
@@ -186,25 +233,42 @@ class FileItem(QLabel):
         self.setFixedHeight(self.item_height)
 
 class FilesView(QWidget):
+    label_height = 50
+
     def __init__(self):
         super().__init__()
         layout = VBoxLayout()
         self.setLayout(layout)
 
-        '''
-        TODO
-        add title bar to show current directory
-        '''
+        self.directory_label = directory_label = QLabel('')
+        directory_label.setFixedHeight(self.label_height)
+        layout.addWidget(directory_label)
 
-        Global.files_scroll_area = ScrollArea()
-        layout.addWidget(Global.files_scroll_area)
+        self.scroll_area = ScrollArea()
+        layout.addWidget(self.scroll_area)
+    
+    def open_directory(self):
+        self.clear()
+        self.directory_label.setText(Global.directory)
+        files = os.listdir(Global.config.default_path + '/' + Global.directory)
+        for file in files:
+            if file.endswith('.pdf') or file.endswith('.json'):
+                self.scroll_area.add_widget(FileItem(file))
+        self.scroll_area.end_list()
+        self.scroll_area.scroll_to_top()
+    
+    def clear(self):
+        self.directory_label.setText('')
+        self.scroll_area.clear_list()
 
 class MainContent(QSplitter):
     def __init__(self):
         super().__init__()
 
-        self.addWidget(DirectoriesView())
-        self.addWidget(FilesView())
+        Global.directories_view = DirectoriesView()
+        self.addWidget(Global.directories_view)
+        Global.files_view = FilesView()
+        self.addWidget(Global.files_view)
 
         self.setStretchFactor(0, 1)
         self.setStretchFactor(1, 9)
