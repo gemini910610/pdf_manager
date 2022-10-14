@@ -8,6 +8,10 @@ def merge(pdf_files: list[str], output_filename: str):
         output_pdf.pages.extend(pdf.pages)
     output_pdf.save(output_filename)
 
+'''
+TODO
+rewrite this function
+'''
 def json_to_html_code(json_filename: str) -> str:
     with open(json_filename) as json_file:
         json_content = json.load(json_file)
