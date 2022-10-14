@@ -103,6 +103,7 @@ class MainTopBar(HBoxLayout):
             path = f'{Global.config.default_path}/{directory}'
             files = os.listdir(f'{Global.config.default_path}/{directory}')
             if merge_output_filename in files:
+                Global.files_view.next_progress()
                 continue
             pdf_files = []
             for file in files:
