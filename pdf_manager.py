@@ -36,3 +36,7 @@ def html_code_to_pdf(html_code: str, output_filename: str):
     pdf.add_page()
     pdf.write_html(html_code)
     pdf.output(output_filename)
+
+def json_to_pdf(json_filename: str, output_filename: str):
+    html_code = json_to_html_code(json_filename)
+    html_code_to_pdf(html_code, output_filename)

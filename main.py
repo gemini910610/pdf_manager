@@ -1,9 +1,8 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea, QMessageBox, QCheckBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea, QProgressBar
 from PySide6.QtCore import Qt
 import os
 import json
 import pdf_manager
-import logging
 
 class Config:
     def __init__(self):
@@ -86,10 +85,6 @@ class MainTopBar(HBoxLayout):
         Global.directories_view.change_path()
         Global.files_view.clear()
     
-    '''
-    TODO
-    add progress bar
-    '''
     def convert_and_merge(self):
         merge_output_filename = 'merge_result.pdf'
 
@@ -103,6 +98,7 @@ class MainTopBar(HBoxLayout):
         # else:
         #     output_path = Global.config.output_path
 
+        Global.files_view.start_progress(len(Global.directories))
         for directory in Global.directories:
             path = f'{Global.config.default_path}/{directory}'
             files = os.listdir(f'{Global.config.default_path}/{directory}')
@@ -111,18 +107,16 @@ class MainTopBar(HBoxLayout):
             pdf_files = []
             for file in files:
                 if file.endswith('json'):
-                    Global.convert_done = False
-                    # json to html code
                     filename = file.replace('.json', '')
-                    html_code = pdf_manager.json_to_html_code(f'{path}/{file}')
-                    # html code to pdf
-                    pdf_manager.html_code_to_pdf(html_code, f'{path}/{filename}.pdf')
+                    pdf_manager.json_to_pdf(f'{path}/{file}', f'{path}/{filename}.pdf')
                     pdf_files.append(f'{path}/{filename}.pdf')
                 elif file.endswith('pdf'):
                     pdf_files.append(f'{path}/{file}')
-            # merge pdf
             if pdf_files != []:
                 pdf_manager.merge(pdf_files, f'{path}/{merge_output_filename}')
+            if directory == Global.directory:
+                Global.files_view.open_directory()
+            Global.files_view.next_progress()
     
     # def save_output_path(self, output_path):
     #     Global.config.output_path = output_path
@@ -205,15 +199,25 @@ class FileItem(QLabel):
 
 class FilesView(QWidget):
     label_height = 50
+    progress_bar_thickness = 25
+    progress_bar_length = 150
 
     def __init__(self):
         super().__init__()
         layout = VBoxLayout()
         self.setLayout(layout)
 
+        top_bar = HBoxLayout()
+        layout.addLayout(top_bar)
+
         self.directory_label = directory_label = QLabel('')
         directory_label.setFixedHeight(self.label_height)
-        layout.addWidget(directory_label)
+        top_bar.addWidget(directory_label)
+
+        self.progress_bar = progress_bar = QProgressBar()
+        progress_bar.setFixedSize(self.progress_bar_length, self.progress_bar_thickness)
+        progress_bar.hide()
+        top_bar.addWidget(progress_bar)
 
         self.scroll_area = ScrollArea()
         layout.addWidget(self.scroll_area)
@@ -227,6 +231,17 @@ class FilesView(QWidget):
                 self.scroll_area.add_widget(FileItem(file))
         self.scroll_area.end_list()
         self.scroll_area.scroll_to_top()
+    
+    def start_progress(self, maximum: int):
+        self.progress_bar.setRange(0, maximum)
+        self.progress_bar.setValue(0)
+        self.progress_bar.show()
+    
+    def next_progress(self):
+        value = self.progress_bar.value()
+        self.progress_bar.setValue(value + 1)
+        if value + 1 == self.progress_bar.maximum():
+            self.progress_bar.hide()
     
     def clear(self):
         self.directory_label.setText('')
@@ -261,10 +276,6 @@ class MainWindow(QMainWindow):
         layout.addLayout(MainTopBar())
         layout.addWidget(MainContent())
 
-'''
-TODO
-add exception catcher and will log exception into error.log
-'''
 app = QApplication([])
 if Global.config.default_path == '':
     Global.config.default_path = QFileDialog.getExistingDirectory()
