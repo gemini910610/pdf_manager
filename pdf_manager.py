@@ -13,7 +13,7 @@ TODO
 rewrite this function
 '''
 def json_to_html_code(json_filename: str) -> str:
-    with open(json_filename) as json_file:
+    with open(json_filename, 'r', encoding='utf-8') as json_file:
         json_content = json.load(json_file)
     '''
     TODO
