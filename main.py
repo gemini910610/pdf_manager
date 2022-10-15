@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea, QProgressBar
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea, QProgressBar, QMessageBox
 from PySide6.QtCore import Qt
 import os
 import json
@@ -21,6 +21,8 @@ class Config:
         with open('config.json', 'r') as config_file:
             config = json.load(config_file)
             self.default_path = config['default_path']
+            if not os.path.exists(self.default_path):
+                self.default_path = ''
             # self.output_path = config['output_path']
             # self.ask_save_output_path = config['ask_save_output_path']
 
@@ -120,6 +122,12 @@ class MainTopBar(HBoxLayout):
             if directory == Global.directory:
                 Global.files_view.open_directory()
             Global.files_view.next_progress()
+        QMessageBox.information(
+            Global.main_window,
+            'Convert and Merge',
+            'convert and merge success',
+            QMessageBox.Ok
+        )
     
     # def save_output_path(self, output_path):
     #     Global.config.output_path = output_path

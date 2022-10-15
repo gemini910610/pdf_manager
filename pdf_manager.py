@@ -22,8 +22,11 @@ def json_to_html_code(json_filename: str) -> str:
     rewrite following code
     '''
     html_code = '<table border="1">'
+    html_code += '<thead><tr><th width="50%">KEY</th><th width="50%">VALUE</th></tr></thead>'
+    html_code += '<tbody>'
     for key in json_content:
-        html_code += f'<tr><td width="50%">{key}</td><td width="50%">{json_content[key]}</td></tr>'
+        html_code += f'<tr><td>{key}</td><td>{json_content[key]}</td></tr>'
+    html_code += '</tbody>'
     html_code += '</table>'
     return html_code
 
@@ -33,6 +36,7 @@ class PDF(FPDF, HTMLMixin):
     def __init__(self):
         super().__init__()
         self.add_font('yahei', fname='MicrosoftYaHeiMono-CP950.ttf', uni=True)
+        self.add_font('yahei', 'B', fname='MicrosoftYaHeiMono-CP950.ttf', uni=True)
         self.set_font('yahei', size=14)
 
 def html_code_to_pdf(html_code: str, output_filename: str):
