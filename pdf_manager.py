@@ -8,10 +8,6 @@ def merge(pdf_files: list[str], output_filename: str):
         output_pdf.pages.extend(pdf.pages)
     output_pdf.save(output_filename)
 
-'''
-TODO
-rewrite this function
-'''
 def json_to_html_code(json_filename: str) -> str:
     with open(json_filename, 'r', encoding='utf-8') as json_file:
         json_content = json.load(json_file)
@@ -19,8 +15,12 @@ def json_to_html_code(json_filename: str) -> str:
     TODO
     remove following two lines
     '''
-    if type(json_content) is list:
+    if type(json_content) is not dict:
         return '<p>invalid value</p>'
+    '''
+    TODO
+    rewrite following code
+    '''
     html_code = '<table border="1">'
     for key in json_content:
         html_code += f'<tr><td width="50%">{key}</td><td width="50%">{json_content[key]}</td></tr>'

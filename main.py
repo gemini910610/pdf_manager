@@ -109,6 +109,8 @@ class MainTopBar(HBoxLayout):
             for file in files:
                 if file.endswith('json'):
                     filename = file.replace('.json', '')
+                    if f'{filename}.pdf' in files:
+                        continue
                     pdf_manager.json_to_pdf(f'{path}/{file}', f'{path}/{filename}.pdf')
                     pdf_files.append(f'{path}/{filename}.pdf')
                 elif file.endswith('pdf'):
@@ -182,6 +184,7 @@ class DirectoriesView(QWidget):
             return
         self.scroll_area.clear_list()
         directories = os.listdir(Global.config.default_path)
+        Global.directory = ''
         Global.directories = []
         for directory in directories:
             if os.path.isdir(f'{Global.config.default_path}/{directory}'):
