@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSplitter, QScrollArea, QProgressBar, QMessageBox
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 import os
 import json
 import pdf_manager
+import threading
 
 class Config:
     def __init__(self):
@@ -57,11 +58,14 @@ class VBoxLayout(QVBoxLayout):
 #         self.setCheckBox(self.check_box)
 
 class MainTopBar(HBoxLayout):
+    show_message_box_signal = Signal()
     button_width = 100
     button_height = 50
+    thread_running = False
 
     def __init__(self):
         super().__init__(10)
+        self.show_message_box_signal.connect(self.show_message_box)
 
         change_path_button = QPushButton('change\npath')
         self.addWidget(change_path_button)
@@ -75,7 +79,7 @@ class MainTopBar(HBoxLayout):
         convert_button = QPushButton('merge\nconvert')
         self.addWidget(convert_button)
         convert_button.setFixedSize(self.button_width, self.button_height)
-        convert_button.clicked.connect(self.convert_and_merge)
+        convert_button.clicked.connect(self.convert_and_merge_thread)
     
     def change_path(self):
         default_path = QFileDialog.getExistingDirectory()
@@ -86,6 +90,13 @@ class MainTopBar(HBoxLayout):
         self.path_label.setText(Global.config.default_path)
         Global.directories_view.change_path()
         Global.files_view.clear()
+    
+    def convert_and_merge_thread(self):
+        if self.thread_running:
+            return
+        thread = threading.Thread(target=self.convert_and_merge)
+        thread.start()
+        self.thread_running = True
     
     def convert_and_merge(self):
         merge_output_filename = 'merge_result.pdf'
@@ -99,29 +110,33 @@ class MainTopBar(HBoxLayout):
         #         message_box.show()
         # else:
         #     output_path = Global.config.output_path
+        directories = Global.directories
+        default_path = Global.config.default_path
 
-        Global.files_view.start_progress(len(Global.directories))
-        for directory in Global.directories:
-            path = f'{Global.config.default_path}/{directory}'
-            files = os.listdir(f'{Global.config.default_path}/{directory}')
-            if merge_output_filename in files:
-                Global.files_view.next_progress()
-                continue
-            pdf_files = []
-            for file in files:
-                if file.endswith('json'):
-                    filename = file.replace('.json', '')
-                    if f'{filename}.pdf' in files:
-                        continue
-                    pdf_manager.json_to_pdf(f'{path}/{file}', f'{path}/{filename}.pdf')
-                    pdf_files.append(f'{path}/{filename}.pdf')
-                elif file.endswith('pdf'):
-                    pdf_files.append(f'{path}/{file}')
-            if pdf_files != []:
-                pdf_manager.merge(pdf_files, f'{path}/{merge_output_filename}')
-            if directory == Global.directory:
-                Global.files_view.open_directory()
-            Global.files_view.next_progress()
+        Global.files_view.start_progress_signal.emit(len(directories))
+        for directory in directories:
+            path = f'{default_path}/{directory}'
+            files = os.listdir(f'{default_path}/{directory}')
+            if merge_output_filename not in files:
+                pdf_files = []
+                for file in files:
+                    if file.endswith('json'):
+                        filename = file.replace('.json', '')
+                        if f'{filename}.pdf' in files:
+                            continue
+                        pdf_manager.json_to_pdf(f'{path}/{file}', f'{path}/{filename}.pdf')
+                        pdf_files.append(f'{path}/{filename}.pdf')
+                    elif file.endswith('pdf'):
+                        pdf_files.append(f'{path}/{file}')
+                if pdf_files != []:
+                    pdf_manager.merge(pdf_files, f'{path}/{merge_output_filename}')
+                if directory == Global.directory:
+                    Global.files_view.open_directory_signal.emit()
+            Global.files_view.next_progress_signal.emit()
+        self.show_message_box_signal.emit()
+        self.thread_running = False
+    
+    def show_message_box(self):
         QMessageBox.information(
             Global.main_window,
             'Convert and Merge',
@@ -210,12 +225,19 @@ class FileItem(QLabel):
         self.setFixedHeight(self.item_height)
 
 class FilesView(QWidget):
+    open_directory_signal = Signal()
+    start_progress_signal = Signal(int)
+    next_progress_signal = Signal()
     label_height = 50
     progress_bar_thickness = 25
     progress_bar_length = 150
 
     def __init__(self):
         super().__init__()
+        self.open_directory_signal.connect(self.open_directory)
+        self.start_progress_signal.connect(self.start_progress)
+        self.next_progress_signal.connect(self.next_progress)
+
         layout = VBoxLayout()
         self.setLayout(layout)
 

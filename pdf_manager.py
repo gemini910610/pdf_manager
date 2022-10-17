@@ -20,6 +20,7 @@ def json_to_html_code(json_filename: str) -> str:
     '''
     TODO
     rewrite following code
+    remember to add width to children of first tr
     '''
     html_code = '<table border="1">'
     html_code += '<thead><tr><th width="50%">KEY</th><th width="50%">VALUE</th></tr></thead>'
@@ -35,9 +36,9 @@ from fpdf import FPDF, HTMLMixin
 class PDF(FPDF, HTMLMixin):
     def __init__(self):
         super().__init__()
-        self.add_font('yahei', fname='MicrosoftYaHeiMono-CP950.ttf', uni=True)
-        self.add_font('yahei', 'B', fname='MicrosoftYaHeiMono-CP950.ttf', uni=True)
-        self.set_font('yahei', size=14)
+        self.add_font('YaHei', '', 'MicrosoftYaHeiMono-CP950.ttf', True)
+        self.add_font('YaHei', 'B', 'MicrosoftYaHeiMono-CP950.ttf', True)
+        self.set_font('YaHei', size=14)
 
 def html_code_to_pdf(html_code: str, output_filename: str):
     pdf = PDF()
